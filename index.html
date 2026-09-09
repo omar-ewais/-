@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التحقق من الشهادات - Healthy Diet Academy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: url("3.png") center/cover no-repeat fixed;
+            padding: 50px;
+            text-align: center;
+        }
+        .top-header {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            width: fit-content;
+            margin: 0 0 12px 0;
+            padding-left: 18px;
+        }
+        .site-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #d7f3de;
+            box-shadow: 0 0 0 1px rgba(46, 204, 113, 0.15), 0 4px 14px rgba(0,0,0,0.18);
+            text-decoration: none;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+        .site-link:hover {
+            background: #f4fff7;
+            box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.25), 0 0 18px rgba(46, 204, 113, 0.45);
+            transform: translateY(-1px) scale(1.03);
+        }
+        .site-link img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+        }
+        .verify-card {
+            background: rgba(255, 255, 255, 0.88);
+            max-width: 450px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .logo-box {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+        .logo-box img {
+            width: 180px;
+            height: auto;
+            display: block;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.08));
+        }
+        input[type="text"] { width: 80%; padding: 12px; margin: 15px 0; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; text-align: center; }
+        button { background-color: #2ecc71; color: white; padding: 12px 25px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; width: 85%; }
+        button:hover { background-color: #27ae60; }
+        .result-box { margin-top: 20px; font-size: 16px; line-height: 1.6; text-align: right; padding: 15px; border-radius: 5px; display: none; }
+        .success { background-color: #e8f8f5; border: 1px solid #2ecc71; color: #27ae60; }
+        .error { background-color: #fdedec; border: 1px solid #e74c3c; color: #c0392b; text-align: center; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-content {
+            background: white;
+            width: min(90vw, 900px);
+            max-height: 90vh;
+            overflow: auto;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .modal-image {
+            width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+        .download-btn {
+            margin-top: 12px;
+            width: auto;
+            padding: 10px 18px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-header">
+    <a class="site-link" href="https://omar-ewais.github.io/-hda/" target="_blank" aria-label="Healthy Diet Academy">
+        <img src="3.png" alt="Healthy Diet Academy">
+    </a>
+</div>
+
+<div class="verify-card">
+    <div class="logo-box">
+        <img src="3.png" alt="Healthy Diet Academy">
+    </div>
+    <h2>التحقق من مصداقية الشهادة</h2>
+    <p>أدخل الرمز الفريد المطبوع على الشهادة للتأكد من بيانات الخريج فوراً.</p>
+    
+    <input type="text" id="certIdInput" placeholder="مثال: HDA-2026-00001">
+    <button id="checkButton" type="button">تحقق الآن</button>
+
+    <div id="resultBox" class="result-box"></div>
+</div>
+
+<div class="modal-overlay" id="certificateModal">
+    <div class="modal-content">
+        <button class="modal-close" id="closeModal" aria-label="إغلاق">×</button>
+        <img id="certificateImage" class="modal-image" src="" alt="صورة الشهادة">
+        <button class="download-btn" id="downloadCertificateBtn" type="button">تحميل الصورة</button>
+    </div>
+</div>
+
+<script>
+const certificatesDatabase = {
+    "HDA-2026-00001": {
+        studentName: "Rania Mohamed Rizq Al-Buraimi",
+        courseName: "دبلومة التغذية الشاملة",
+        issueDate: "يوليو 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-2026-00001.png"
+    },
+    "HDA-2026-00002": {
+        studentName: "Yasmin Al-Sayed Abdullah Abu Al-Ezz",
+        courseName: "دبلومة التغذية الشاملة",
+        issueDate: "يوليو 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-2026-00002.png"
+    },
+    "HDA-2026-00003": {
+        studentName: "Shahd Abdelmoneim Tawfiq Abdelmoneim",
+        courseName: "دبلومة التغذية الشاملة",
+        issueDate: "يوليو 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-2026-00003.png"
+    },
+    "HDA-2026-00004": {
+        studentName: "Shahd Shaaban Saeed Suleiman",
+        courseName: "دبلومة التغذية الشاملة",
+        issueDate: "يوليو 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-2026-00004.png"
+    },
+    "HDA-2026-00005": {
+        studentName: "Jaber Khaled Jaber Maghawry",
+        courseName: "دبلومة التغذية الشاملة",
+        issueDate: "يوليو 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-2026-00005.png"
+    },
+    "HDA-2026-00006": {
+        studentName: "Hanaa Mohamed Ibrahim Bayoumi",
+        courseName: "دبلومة التغذية الشاملة",
+        issueDate: "يوليو 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-2026-00006.png"
+    },
+    "HDA-2026-00007": {
+        studentName: "Fatima Tareq Mokhtar Ismail",
+        courseName: "دبلومة التغذية الشاملة",
+        issueDate: "يوليو 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-2026-00007.png"
+    },
+    "HDA-2026-00008": {
+        studentName: "Abdelaziz Alaa Kamaleldin Ibrahim",
+        courseName: "دبلومة التغذية الشاملة",
+        issueDate: "يوليو 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-2026-00008.png"
+    },
+    "HDA-HT-2026-00001": {
+        studentName: "Mariam Mahmoud Kamal",
+        courseName: "التدريب العملي في مستشفى رسلان التخصصي بطنطا",
+        issueDate: "أغسطس 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-HT-2026-00001.png"
+    },
+    "HDA-HT-2026-00002": {
+        studentName: "Doha Ahmed Ahmed",
+        courseName: "التدريب العملي في مستشفى رسلان التخصصي بطنطا",
+        issueDate: "أغسطس 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-HT-2026-00002.png"
+    },
+    "HDA-HT-2026-00003": {
+        studentName: "Mohamed Mahmoud Selim",
+        courseName: "التدريب العملي في مستشفى رسلان التخصصي بطنطا",
+        issueDate: "أغسطس 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-HT-2026-00003.png"
+    },
+    "HDA-HT-2026-00004": {
+        studentName: "Mawada Massad El Sakhawy",
+        courseName: "التدريب العملي في مستشفى رسلان التخصصي بطنطا",
+        issueDate: "أغسطس 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-HT-2026-00004.png"
+    },
+    "HDA-HT-2026-00005": {
+        studentName: "Fatma Ibrahim El Gazzar",
+        courseName: "التدريب العملي في مستشفى رسلان التخصصي بطنطا",
+        issueDate: "أغسطس 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-HT-2026-00005.png"
+    },
+    "HDA-HT-2026-00006": {
+        studentName: "Alaa Ahmed Samir Sharaf",
+        courseName: "التدريب العملي في مستشفى رسلان التخصصي بطنطا",
+        issueDate: "أغسطس 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-HT-2026-00006.png"
+    },
+    "HDA-HT-2026-00007": {
+        studentName: "Omnia Mohamed Ahmed",
+        courseName: "التدريب العملي في مستشفى رسلان التخصصي بطنطا",
+        issueDate: "أغسطس 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-HT-2026-00007.png"
+    },
+    "HDA-HT-2026-00008": {
+        studentName: "Shahd Ibrahim Nayel",
+        courseName: "التدريب العملي في مستشفى رسلان التخصصي بطنطا",
+        issueDate: "أغسطس 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-HT-2026-00008.png"
+    },
+    "HDA-HT-2026-00009": {
+        studentName: "Aml Khaled Mahmoud",
+        courseName: "التدريب العملي في مستشفى رسلان التخصصي بطنطا",
+        issueDate: "أغسطس 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-HT-2026-00009.png"
+    },
+    "HDA-HT-2026-00010": {
+        studentName: "Shrouq Wajih Fouda",
+        courseName: "التدريب العملي في مستشفى رسلان التخصصي بطنطا",
+        issueDate: "أغسطس 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-HT-2026-00010.png"
+    },
+    "HDA-HT-2026-00011": {
+        studentName: "Shrouq Fayez Ghoneim",
+        courseName: "التدريب العملي في مستشفى رسلان التخصصي بطنطا",
+        issueDate: "أغسطس 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-HT-2026-00011.png"
+    },
+    "HDA-HT-2026-00012": {
+        studentName: "Adham amr akl",
+        courseName: "التدريب العملي في مستشفى رسلان التخصصي بطنطا",
+        issueDate: "أغسطس 2026",
+        grade: "إتمام بنجاح",
+        certificateImage: "HDA-HT-2026-00012.png"
+    }
+};
+
+const certIdInput = document.getElementById("certIdInput");
+const checkButton = document.getElementById("checkButton");
+const resultBox = document.getElementById("resultBox");
+const certificateModal = document.getElementById("certificateModal");
+const certificateImage = document.getElementById("certificateImage");
+const closeModal = document.getElementById("closeModal");
+const downloadCertificateBtn = document.getElementById("downloadCertificateBtn");
+
+function openCertificateModal(imageSrc) {
+    certificateImage.src = imageSrc;
+    certificateModal.classList.add("show");
+}
+
+function closeCertificateModal() {
+    certificateModal.classList.remove("show");
+}
+
+function downloadImage(url, name) {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function checkCertificate() {
+    // جعل الكود يقبل الحروف الكبيرة والصغيرة ويمسح المسافات الزائدة
+    const inputVal = certIdInput.value.trim().toUpperCase();
+
+    resultBox.style.display = "none";
+    resultBox.className = "result-box";
+
+    if (inputVal === "") {
+        resultBox.style.display = "block";
+        resultBox.classList.add("error");
+        resultBox.innerHTML = "يرجى إدخال رمز الشهادة أولاً.";
+        return;
+    }
+
+    if (certificatesDatabase[inputVal]) {
+        const cert = certificatesDatabase[inputVal];
+        resultBox.style.display = "block";
+        resultBox.classList.add("success");
+        resultBox.innerHTML = `
+            <strong>✅ شهادة معتمدة وصالحة</strong><br><br>
+            <b>اسم الخريج:</b> ${cert.studentName}<br>
+            <b>البرنامج التدريبي:</b> ${cert.courseName}<br>
+            <b>تاريخ الإصدار:</b> ${cert.issueDate}<br>
+            <b>التقدير العام:</b> ${cert.grade}
+        `;
+        openCertificateModal(cert.certificateImage);
+    } else {
+        resultBox.style.display = "block";
+        resultBox.classList.add("error");
+        resultBox.innerHTML = "❌ الرمز غير صحيح أو الشهادة غير مسجلة في أنظمتنا.";
+    }
+}
+
+checkButton.addEventListener("click", checkCertificate);
+certIdInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        checkCertificate();
+    }
+});
+
+closeModal.addEventListener("click", closeCertificateModal);
+certificateModal.addEventListener("click", function (event) {
+    if (event.target === certificateModal) {
+        closeCertificateModal();
+    }
+});
+downloadCertificateBtn.addEventListener("click", function () {
+    const currentImage = certificateImage.src;
+    if (currentImage) {
+        const fileName = currentImage.substring(currentImage.lastIndexOf('/') + 1) || "certificate.png";
+        downloadImage(currentImage, fileName);
+    }
+});
+</script>
+
+</body>
+</html>
